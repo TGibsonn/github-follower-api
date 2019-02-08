@@ -39,6 +39,8 @@ In order to run the tests recursively for this project:
 go test ./...
 ```
 
+Tests are organized into subtests. You can pass -v to `go test` to see their labels and table-driven test details.
+
 ### Structure
 
 All unit tests are located next to their respective production code. I.e., `api_test.go` is next to `api.go`.
