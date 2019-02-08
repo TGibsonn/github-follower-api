@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"net/http"
 	"testing"
@@ -26,20 +27,36 @@ func (m *MockRouter) HandleFunc(path string, f func(http.ResponseWriter, *http.R
 
 // Test the wrapper for adding GET routes to the API.
 func TestGet(t *testing.T) {
-	// Create instance of mocked router.
-	testRouter := new(MockRouter)
+	t.Run("TestGet", func(t *testing.T) {
+		// Create instance of mocked router.
+		testRouter := new(MockRouter)
 
-	// Expectation: HandleFunc is called with the correct parameters.
-	testRouter.On("HandleFunc", "/test", mock.AnythingOfType("func(http.ResponseWriter, *http.Request)")).Return(&mux.Route{})
+		// Expectation: HandleFunc is called with the correct parameters.
+		testRouter.On("HandleFunc", "/test", mock.AnythingOfType("func(http.ResponseWriter, *http.Request)")).Return(&mux.Route{})
 
-	// Create an instance of the API.
-	api := API{
-		Router: testRouter,
-	}
+		// Create an instance of the API.
+		api := API{
+			Router: testRouter,
+		}
 
-	// Call the function under test.
-	api.Get("/test", FakeGetHandler)
+		// Call the function under test.
+		api.Get("/test", FakeGetHandler)
 
-	// Assert expectations are met.
-	testRouter.AssertExpectations(t)
+		// Assert expectations are met.
+		testRouter.AssertExpectations(t)
+	})
+}
+
+// Test the initialization of the API.
+func TestInit(t *testing.T) {
+	t.Run("TestInit", func(t *testing.T) {
+		// Create an instance of the API.
+		api := API{}
+
+		// Call the function under test.
+		api.Init()
+
+		// Assert the router is set.
+		assert.NotNil(t, api.Router)
+	})
 }
