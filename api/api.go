@@ -19,9 +19,9 @@ type API struct {
 	Router Router
 }
 
-// Init initializes the API's fields.
-func (a *API) Init() {
-	a.Router = DefaultRouter
+// NewAPI creates a new API instance that is already initialized.
+func NewAPI() *API {
+	return &API{DefaultRouter}
 }
 
 // Get adds a GET path and correpsonding handler to the API's router.

@@ -47,14 +47,11 @@ func TestGet(t *testing.T) {
 	})
 }
 
-// Test the initialization of the API.
-func TestInit(t *testing.T) {
-	t.Run("TestInit", func(t *testing.T) {
-		// Create an instance of the API.
-		api := API{}
-
-		// Call the function under test.
-		api.Init()
+// Test the API constructor.
+func TestNewAPI(t *testing.T) {
+	t.Run("TestNewAPI", func(t *testing.T) {
+		// Call the function under test, assign to `api` variable.
+		api := NewAPI()
 
 		// Assert the router is set.
 		assert.NotNil(t, api.Router)
