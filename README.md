@@ -1,5 +1,11 @@
 # GitHub Follower API
 
+## Overview
+
+GitHub Follower API utilizes the `followers` endpoint of the V3 GitHub API in order to return a collection of usernames that follow a given user, as well as the followers of their followers.
+
+The JSON data returned will contain the top 100 followers up to 4 layers deep.
+
 ## Setup
 
 ### Installation
