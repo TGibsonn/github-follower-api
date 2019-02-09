@@ -28,11 +28,13 @@ var fakeGetFollowersResponseJSON = []byte(`
 [
 	{
 		"login": "testuser1",
-		"id": "abc123="
+		"id": "abc123=",
+		"html_url":" some_test_url"
 	},
 	{
 		"login": "testuser2",
-		"id": "efg345="
+		"id": "efg345=",
+		"avatar_url": "some_test_url"
 	}
 ]
 `)
