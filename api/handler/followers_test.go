@@ -1,30 +1,53 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/TGibsonn/github-follower-api/api/model"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
+/* FAKES */
+
+var fakeGetFollowersResponse = []model.Follower{
+	{
+		Login: "testuser1",
+		ID:    "abc123=",
+	},
+	{
+		Login: "testuser2",
+		ID:    "efg345=",
+	},
+}
+
+var fakeGetFollowersResponseJSON = []byte(`
+[
+	{
+		"login": "testuser1",
+		"id": "abc123="
+	},
+	{
+		"login": "testuser2",
+		"id": "efg345="
+	}
+]
+`)
+
 /* TESTS */
 
 // TestGetFollowers test table.
 var testGetFollowersCases = []struct {
 	username     string
-	expectedResp []byte
+	expectedResp []model.Follower
 	expectedErr  error
 }{
 	{
 		username:     "TGibsonn",
-		expectedResp: []byte(`OK`),
-		expectedErr:  nil,
-	},
-	{
-		username:     "AnotherUsername",
-		expectedResp: []byte(`OK`),
+		expectedResp: fakeGetFollowersResponse,
 		expectedErr:  nil,
 	},
 	{
@@ -44,7 +67,7 @@ func TestGetFollowers(t *testing.T) {
 				assert.Equal(t, r.URL.String(), "/users/"+tt.username+"/followers")
 
 				// Send response to be tested.
-				w.Write([]byte(`OK`))
+				w.Write(fakeGetFollowersResponseJSON)
 			}))
 
 			// Create an instance of the followers handler.
@@ -56,11 +79,28 @@ func TestGetFollowers(t *testing.T) {
 			// Call the function under test.
 			resp, err := handler.GetFollowers(tt.username)
 
-			// Ensure resp matches expected resp.
-			assert.Equal(t, resp, tt.expectedResp)
-
 			// Ensure err matches expected error.
 			assert.Equal(t, err, tt.expectedErr)
+
+			// Return out of the test early if there was an error.
+			if err != nil {
+				return
+			}
+
+			// Parse the response into an object.
+			var parsedResponse []model.Follower
+			err = json.Unmarshal(resp, &parsedResponse)
+
+			// Ensure there was no error parsing the response.
+			assert.Nil(t, err)
+
+			// Return out of the test early if there was an error.
+			if err != nil {
+				return
+			}
+
+			// Ensure resp matches expected resp.
+			assert.Equal(t, parsedResponse, tt.expectedResp)
 		})
 	}
 }
