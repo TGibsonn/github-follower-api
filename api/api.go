@@ -14,17 +14,56 @@ type Router interface {
 	HandleFunc(path string, f func(w http.ResponseWriter, r *http.Request)) *mux.Route
 }
 
+// FollowersHandler provides methods for handling the `followers` endpoint.
+type FollowersHandler interface {
+	GetFollowers(username string) ([]byte, error)
+}
+
 // API stores the router and its respective handlers.
 type API struct {
-	Router Router
+	Router           Router
+	FollowersHandler FollowersHandler
 }
 
 // NewAPI creates a new API instance that is already initialized.
-func NewAPI() *API {
-	return &API{DefaultRouter}
+func NewAPI(followersHandler FollowersHandler) *API {
+	return &API{
+		Router:           DefaultRouter,
+		FollowersHandler: followersHandler,
+	}
 }
 
 // Get adds a GET path and correpsonding handler to the API's router.
 func (a *API) Get(path string, f func(w http.ResponseWriter, r *http.Request)) {
 	a.Router.HandleFunc(path, f).Methods("GET")
+}
+
+/* API Endpoint Handler Wrappers */
+
+// GetFollowers wraps the handler provided for the `followers` endpoint.
+func (a *API) GetFollowers(w http.ResponseWriter, r *http.Request) {
+	// Retrieve the request variables.
+	vars := mux.Vars(r)
+
+	// Pull the username from the variables.
+	username := vars["username"]
+
+	// Ensure there are variables in the request.
+	if username == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// Call the wrapped method.
+	resp, err := a.FollowersHandler.GetFollowers(username)
+
+	// Write the error if there was one.
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(resp)
+		return
+	}
+
+	// Write the body.
+	w.Write(resp)
 }

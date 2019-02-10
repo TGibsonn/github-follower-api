@@ -48,7 +48,7 @@ var testGetFollowersCases = []struct {
 	expectedErr  error
 }{
 	{
-		username:     "TGibsonn",
+		username:     "testuser",
 		expectedResp: fakeGetFollowersResponse,
 		expectedErr:  nil,
 	},
@@ -82,7 +82,7 @@ func TestGetFollowers(t *testing.T) {
 			resp, err := handler.GetFollowers(tt.username)
 
 			// Ensure err matches expected error.
-			assert.Equal(t, err, tt.expectedErr)
+			assert.Equal(t, tt.expectedErr, err)
 
 			// Return out of the test early if there was an error.
 			if err != nil {
@@ -102,7 +102,7 @@ func TestGetFollowers(t *testing.T) {
 			}
 
 			// Ensure resp matches expected resp.
-			assert.Equal(t, parsedResponse, tt.expectedResp)
+			assert.Equal(t, tt.expectedResp, parsedResponse)
 		})
 	}
 }
