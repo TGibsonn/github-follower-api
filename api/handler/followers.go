@@ -10,7 +10,7 @@ import (
 // https://developer.github.com/v3/users/followers
 type FollowersHandler struct {
 	HTTPClient *http.Client
-	baseURL    string
+	BaseURL    string
 }
 
 // GetFollowers performs GET /user/followers
@@ -21,7 +21,7 @@ func (f *FollowersHandler) GetFollowers(username string) ([]byte, error) {
 	}
 
 	// Call GitHub's API using the HTTPClient.
-	resp, err := f.HTTPClient.Get(f.baseURL + "/users/" + username + "/followers")
+	resp, err := f.HTTPClient.Get(f.BaseURL + "/users/" + username + "/followers")
 	if err != nil {
 		return nil, err
 	}

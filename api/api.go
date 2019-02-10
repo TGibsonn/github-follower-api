@@ -12,6 +12,7 @@ var DefaultRouter *mux.Router = mux.NewRouter()
 // Router handles adding routes and their corresponding handlers for API use.
 type Router interface {
 	HandleFunc(path string, f func(w http.ResponseWriter, r *http.Request)) *mux.Route
+	ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 // FollowersHandler provides methods for handling the `followers` endpoint.

@@ -75,7 +75,7 @@ func TestGetFollowers(t *testing.T) {
 			// Create an instance of the followers handler.
 			handler := FollowersHandler{
 				HTTPClient: testServer.Client(),
-				baseURL:    testServer.URL,
+				BaseURL:    testServer.URL,
 			}
 
 			// Call the function under test.

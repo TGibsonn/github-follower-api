@@ -26,6 +26,10 @@ func (m *MockRouter) HandleFunc(path string, f func(http.ResponseWriter, *http.R
 	return args.Get(0).(*mux.Route)
 }
 
+func (m *MockRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	m.Called(w, r)
+}
+
 type MockFollowersHandler struct {
 	mock.Mock
 }
