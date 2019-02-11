@@ -22,7 +22,7 @@ func main() {
 	api := api.NewAPI(followersHandler)
 
 	// Register the `followers` endpoint.
-	api.Get("/{username}", api.GetFollowers)
+	api.Get("/followers/{username}", api.GetFollowers)
 
 	// Listen for connections.
 	log.Fatal(http.ListenAndServe(":8080", api.Router))
