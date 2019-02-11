@@ -1,8 +1,10 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 
+	"github.com/TGibsonn/github-follower-api/api/model"
 	"github.com/gorilla/mux"
 )
 
@@ -17,7 +19,7 @@ type Router interface {
 
 // FollowersHandler provides methods for handling the `followers` endpoint.
 type FollowersHandler interface {
-	GetFollowers(username string) ([]byte, error)
+	GetFollowers(username string) ([]model.Follower, error)
 }
 
 // API stores the router and its respective handlers.
@@ -56,7 +58,11 @@ func (a *API) GetFollowers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call the wrapped method.
-	resp, err := a.FollowersHandler.GetFollowers(username)
+	followers, err := a.FollowersHandler.GetFollowers(username)
+
+	// Marshal the followers array for response format.
+	var resp []byte
+	resp, err = json.Marshal(followers)
 
 	// Write the error if there was one.
 	if err != nil {

@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/TGibsonn/github-follower-api/api/model"
 )
 
 // FollowersHandler provides a set of functions for querying GitHub's API Followers endpoint.
@@ -14,7 +17,7 @@ type FollowersHandler struct {
 }
 
 // GetFollowers performs GET /user/followers
-func (f *FollowersHandler) GetFollowers(username string) ([]byte, error) {
+func (f *FollowersHandler) GetFollowers(username string) ([]model.Follower, error) {
 	// Ensure username is not empty.
 	if username == "" {
 		return nil, errors.New("expected username")
@@ -31,6 +34,16 @@ func (f *FollowersHandler) GetFollowers(username string) ([]byte, error) {
 
 	// Read response body until EOF or an error occurs.
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
 
-	return body, err
+	var followers []model.Follower
+	err = json.Unmarshal(body, &followers)
+
+	if len(followers) > 100 {
+		followers = followers[:100]
+	}
+
+	return followers, err
 }

@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/TGibsonn/github-follower-api/api/model"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -34,9 +35,9 @@ type MockFollowersHandler struct {
 	mock.Mock
 }
 
-func (m *MockFollowersHandler) GetFollowers(username string) ([]byte, error) {
+func (m *MockFollowersHandler) GetFollowers(username string) ([]model.Follower, error) {
 	args := m.Called(username)
-	return args.Get(0).([]byte), args.Error(1)
+	return args.Get(0).([]model.Follower), args.Error(1)
 }
 
 /* TESTS */
@@ -117,7 +118,7 @@ func TestGetFollowers(t *testing.T) {
 			testFollowersHandler := new(MockFollowersHandler)
 
 			// Expectation: GetFollowers is called with the correct parameters
-			testFollowersHandler.On("GetFollowers", "testuser").Return([]byte{}, nil)
+			testFollowersHandler.On("GetFollowers", "testuser").Return([]model.Follower{}, nil)
 
 			// Create instance of the API.
 			api := API{

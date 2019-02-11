@@ -4,25 +4,24 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/TGibsonn/github-follower-api/api/model"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/TGibsonn/github-follower-api/api/model"
+	"github.com/stretchr/testify/assert"
 )
 
-/* FAKES */
+/* HELPERS */
 
-var fakeGetFollowersData1 = []model.Follower{
-	{
-		Login: "testuser1",
-		ID:    "abc123=",
-	},
-	{
-		Login: "testuser2",
-		ID:    "efg345=",
-	},
+func createGetFollowersResponse(size int) []byte {
+	followers := make([]model.Follower, size)
+	b, _ := json.Marshal(followers)
+
+	return b
 }
+
+/* FAKES */
 
 var fakeGetFollowersResponse1 = []byte(`
 [
@@ -39,31 +38,18 @@ var fakeGetFollowersResponse1 = []byte(`
 ]
 `)
 
-var fakeGetFollowersData2 = []model.Follower{
+var fakeGetFollowersData1 = []model.Follower{
 	{
-		Login:     "testuser3",
-		ID:        "something",
+		Login:     "testuser1",
+		ID:        "abc123=",
 		Followers: []model.Follower(nil),
 	},
 	{
-		Login:     "testuser4",
-		ID:        "something",
+		Login:     "testuser2",
+		ID:        "efg345=",
 		Followers: []model.Follower(nil),
 	},
 }
-
-var fakeGetFollowersResponse2 = []byte(`
-[
-	{
-		"login": "testuser3",
-		"id": "something"
-	},
-	{
-		"login": "testuser4",
-		"id": "something"
-	}
-]
-`)
 
 /* TESTS */
 
@@ -88,8 +74,8 @@ var testGetFollowersCases = []struct {
 	},
 	{
 		username:     "testuser",
-		httpResponse: fakeGetFollowersResponse2,
-		expectedData: fakeGetFollowersData2,
+		httpResponse: createGetFollowersResponse(125),
+		expectedData: make([]model.Follower, 100),
 		expectedErr:  nil,
 	},
 }
@@ -103,7 +89,7 @@ func TestGetFollowers(t *testing.T) {
 				// Test request params.
 				assert.Equal(t, r.URL.String(), "/users/"+tt.username+"/followers")
 
-				// Send response to be tested.
+				// Send response.
 				w.Write(tt.httpResponse)
 			}))
 
@@ -114,7 +100,7 @@ func TestGetFollowers(t *testing.T) {
 			}
 
 			// Call the function under test.
-			data, err := handler.GetFollowers(tt.username)
+			followers, err := handler.GetFollowers(tt.username)
 
 			// Ensure err matches expected error.
 			assert.Equal(t, tt.expectedErr, err)
@@ -123,10 +109,6 @@ func TestGetFollowers(t *testing.T) {
 			if err != nil {
 				return
 			}
-
-			// Parse the response into an object.
-			var parsedData []model.Follower
-			err = json.Unmarshal(data, &parsedData)
 
 			// Ensure there was no error parsing the response.
 			assert.Nil(t, err)
@@ -137,7 +119,7 @@ func TestGetFollowers(t *testing.T) {
 			}
 
 			// Ensure data matches expected data.
-			assert.Equal(t, tt.expectedData, parsedData)
+			assert.Equal(t, tt.expectedData, followers)
 		})
 	}
 }
