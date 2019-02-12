@@ -20,6 +20,8 @@ Read more about the `follower` endpoint of the Github v3 REST API here: <https:/
 - [Tests](#tests)
   - [Running Tests](#running-tests)
   - [Structure](#structure)
+- [Constraints](#constraints)
+  - [Rate Limits](#rate-limits)
 
 ## Setup
 
@@ -85,3 +87,11 @@ Tests are organized into subtests. You can pass -v to `go test` to see their lab
 ### Structure
 
 All unit tests are located next to their respective production code. I.e., `api_test.go` is next to `api.go`.
+
+## Constraints
+
+### Rate Limits
+
+Due to [rate limit constraints](https://developer.github.com/v3/#rate-limiting) I recommend lowering the max follower count.
+
+Authentication is not currently supported.
