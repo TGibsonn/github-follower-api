@@ -8,6 +8,19 @@ GitHub Follower API utilizes the `followers` endpoint of the GitHub v3 REST API 
 
 Read more about the `follower` endpoint of the Github v3 REST API here: <https://developer.github.com/v3/users/followers/>
 
+## Table of Contents
+
+- [Setup](#setup)
+
+  - [Installation](#installation)
+  - [Dependencies](#dependencies)
+  - [Configuration](#configuration)
+  - [Building & Running](#building-and-running)
+
+- [Tests](#tests)
+  - [Running Tests](#running-tests)
+  - [Structure](#structure)
+
 ## Setup
 
 ### Installation
@@ -40,7 +53,7 @@ MaxFollowerCount
 MaxFollowerDepth
 ```
 
-### Building & Running
+### Building and Running
 
 ```bash
 go build
