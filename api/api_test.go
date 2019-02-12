@@ -35,9 +35,9 @@ type MockFollowersHandler struct {
 	mock.Mock
 }
 
-func (m *MockFollowersHandler) GetFollowers(username string) ([]model.Follower, error) {
-	args := m.Called(username)
-	return args.Get(0).([]model.Follower), args.Error(1)
+func (m *MockFollowersHandler) GetFollowers(username string, maxFollowerCount int, maxDepth int) (model.FollowerMap, error) {
+	args := m.Called(username, maxFollowerCount, maxDepth)
+	return args.Get(0).(model.FollowerMap), args.Error(1)
 }
 
 /* TESTS */
@@ -118,7 +118,7 @@ func TestGetFollowers(t *testing.T) {
 			testFollowersHandler := new(MockFollowersHandler)
 
 			// Expectation: GetFollowers is called with the correct parameters
-			testFollowersHandler.On("GetFollowers", "testuser").Return([]model.Follower{}, nil)
+			testFollowersHandler.On("GetFollowers", "testuser", 100, 4).Return(model.FollowerMap{}, nil)
 
 			// Create instance of the API.
 			api := API{
@@ -133,7 +133,7 @@ func TestGetFollowers(t *testing.T) {
 
 			// If we expected an error, ensure GetFollowers wrapped method wasn't actually called.
 			if recorder.Code != http.StatusOK {
-				testFollowersHandler.AssertNotCalled(t, "GetFollowers", "testuser")
+				testFollowersHandler.AssertNotCalled(t, "GetFollowers", "testuser", 100, 4)
 				return
 			}
 

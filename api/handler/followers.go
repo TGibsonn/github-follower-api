@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -16,52 +17,83 @@ type FollowersHandler struct {
 	BaseURL    string
 }
 
-// GetFollowers handles parsing followers recursively from the `followers` endpoint of the
-// GitHub API.
-func (f *FollowersHandler) GetFollowers(username string) ([]model.Follower, error) {
+// GetFollowers handles parsing followers iteratively from the `followers` endpoint of the
+// GitHub API. Includes followers of followers up to a specified depth.
+func (f *FollowersHandler) GetFollowers(username string, maxFollowerCount int, maxDepth int) (model.FollowerMap, error) {
 	// Ensure username is not empty.
 	if username == "" {
 		return nil, errors.New("expected username")
 	}
 
-	// Retrieve the followers for root user.
-	body, err := f.httpGetFollowers(username)
-	if err != nil {
-		return nil, err
-	}
+	// Create map for return.
+	followerMap := f.getFollowersImpl(username, maxFollowerCount, maxDepth)
 
-	// Parse the response body into a list of followers.
-	var followers []model.Follower
-	err = json.Unmarshal(body, &followers)
+	fmt.Printf("%+v", followerMap)
 
-	// Begin to recursively fill the followers.
-	followers = f.getFollowersRecursive(followers, 0)
-
-	return followers, err
+	return followerMap, nil
 }
 
-// getFollowersRecursive is the algorithm implementation for recursively getting followers.
-// Accepts a root follower list, the current follower count, and the current depth.
-func (f *FollowersHandler) getFollowersRecursive(followersRoot []model.Follower, currDepth int) []model.Follower {
-	if currDepth >= 4 {
-		return followersRoot
-	}
+// getFollowersImpl is the algorithm implementation for manipulating the followers map.
+func (f *FollowersHandler) getFollowersImpl(username string, maxFollowerCount int, maxDepth int) model.FollowerMap {
+	// Start depth off at 0.
+	depth := 0
 
-	for index, follower := range followersRoot {
-		body, err := f.httpGetFollowers(follower.Login)
-		if err != nil {
-			break
+	// Use depth size to calculate current depth.
+	currDepthSize := 0
+
+	// Create the map.
+	followerMap := make(model.FollowerMap)
+
+	// Queue for filling the followers.
+	queue := make([]string, 0)
+	queue = append(queue, username)
+
+	// Iterate over queue and fetch followers.
+	for len(queue[:]) > 0 {
+		// If depth is max or follower max is reached, clear the queue.
+		if depth > maxDepth || len(followerMap) >= maxFollowerCount {
+			queue = nil
 		}
 
+		// Retrieve username.
+		username := queue[0]
+
+		// Pop top of queue.
+		queue = queue[1:]
+
+		// Retrieve followers for first queue element.
+		body, _ := f.httpGetFollowers(username)
+
+		// Parse the response body into a list of followers.
 		var followers []model.Follower
-		err = json.Unmarshal(body, &followers)
+		json.Unmarshal(body, &followers)
 
-		if len(followers) != 0 {
-			followersRoot[index].Followers = f.getFollowersRecursive(followers, currDepth+1)
+		// Set the followers and add to the queue.
+		followerList := make([]string, 0)
+		for _, follower := range followers {
+			followerList = append(followerList, follower.Login)
+
+			followerMap[follower.Login] = &model.FollowerNode{
+				Depth: depth,
+			}
+
+			// Queue up the followers to be queried.
+			queue = append(queue, follower.Login)
 		}
+
+		if currDepthSize <= 0 {
+			currDepthSize = len(followerList)
+			depth++
+		}
+
+		if followerMap[username] != nil {
+			followerMap[username].Followers = followerList
+		}
+
+		currDepthSize--
 	}
 
-	return followersRoot
+	return followerMap
 }
 
 // httpGetFollowers performs an HTTP GET on GitHub's API /users/{username}/followers

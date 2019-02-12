@@ -19,7 +19,7 @@ type Router interface {
 
 // FollowersHandler provides methods for handling the `followers` endpoint.
 type FollowersHandler interface {
-	GetFollowers(username string) ([]model.Follower, error)
+	GetFollowers(username string, maxFollowerCount int, maxDepth int) (model.FollowerMap, error)
 }
 
 // API stores the router and its respective handlers.
@@ -58,7 +58,7 @@ func (a *API) GetFollowers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call the wrapped method.
-	followers, err := a.FollowersHandler.GetFollowers(username)
+	followers, err := a.FollowersHandler.GetFollowers(username, 100, 4)
 
 	// Marshal the followers array for response format.
 	var resp []byte

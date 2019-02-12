@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -14,13 +13,6 @@ import (
 
 /* HELPERS */
 
-func createGetFollowersResponse(size int) []byte {
-	followers := make([]model.Follower, size)
-	b, _ := json.Marshal(followers)
-
-	return b
-}
-
 func setupGetFollowersFakes() {
 	// Test User 1
 	fakeFollowerJSONMap["testuser1"] = testUser1JSON
@@ -30,9 +22,58 @@ func setupGetFollowersFakes() {
 
 	// Test User 3
 	fakeFollowerJSONMap["testuser3"] = testUser3JSON
+}
 
-	// Test User 4
-	fakeFollowerJSONMap["testuser4"] = testUser4JSON
+func createFakeGetFollowersData1() model.FollowerMap {
+	followerMap := make(model.FollowerMap)
+
+	followerMap["testuserempty1"] = &model.FollowerNode{
+		Depth:     0,
+		Followers: make([]string, 0),
+	}
+
+	followerMap["testuserempty2"] = &model.FollowerNode{
+		Depth:     0,
+		Followers: make([]string, 0),
+	}
+
+	return followerMap
+}
+
+func createFakeGetFollowersData2() model.FollowerMap {
+	followerMap := make(model.FollowerMap)
+
+	followerMap["testuser1"] = &model.FollowerNode{
+		Depth:     0,
+		Followers: []string{"testuserempty1", "testuserempty2"},
+	}
+
+	followerMap["testuser3"] = &model.FollowerNode{
+		Depth:     0,
+		Followers: []string{"testuserempty4"},
+	}
+
+	followerMap["testuserempty3"] = &model.FollowerNode{
+		Depth:     0,
+		Followers: make([]string, 0),
+	}
+
+	followerMap["testuserempty1"] = &model.FollowerNode{
+		Depth:     1,
+		Followers: make([]string, 0),
+	}
+
+	followerMap["testuserempty2"] = &model.FollowerNode{
+		Depth:     1,
+		Followers: make([]string, 0),
+	}
+
+	followerMap["testuserempty4"] = &model.FollowerNode{
+		Depth:     1,
+		Followers: make([]string, 0),
+	}
+
+	return followerMap
 }
 
 /* FAKES */
@@ -54,32 +95,25 @@ var testUser1JSON = []byte(`
 ]
 `)
 
-// 1 follower.
+// 3 followers.
 var testUser2JSON = []byte(`
 [
 	{
+		"login": "testuser1"
+	},
+	{
 		"login": "testuser3"
+	},
+	{
+		"login": "testuserempty3"
 	}
 ]
 `)
 
-// 2 followers.
 var testUser3JSON = []byte(`
 [
 	{
-		"login": "testuser4"
-	},
-	{
-		"login": "testuser1"
-	}
-]
-`)
-
-// 1 follower.
-var testUser4JSON = []byte(`
-[
-	{
-		"login": "testuser3"
+		"login": "testuserempty4"
 	}	
 ]
 `)
@@ -90,73 +124,20 @@ var testUser4JSON = []byte(`
 var testGetFollowersCases = []struct {
 	username          string
 	expectedHTTPCalls int
-	expectedData      []model.Follower
+	expectedData      model.FollowerMap
 	expectedErr       error
 }{
 	{
 		username:          "testuser1",
 		expectedHTTPCalls: 3,
-		expectedData: []model.Follower{
-			{
-				Login: "testuserempty1",
-			},
-			{
-				Login: "testuserempty2",
-			},
-		},
-		expectedErr: nil,
+		expectedData:      createFakeGetFollowersData1(),
+		expectedErr:       nil,
 	},
 	{
 		username:          "testuser2",
-		expectedHTTPCalls: 9,
-		expectedData: []model.Follower{
-			{
-				Login: "testuser3", // depth: 0
-				Followers: []model.Follower{
-					{
-						Login: "testuser4", // depth: 1
-						Followers: []model.Follower{
-							{
-								Login: "testuser3", // depth: 2
-								Followers: []model.Follower{
-									{
-										Login: "testuser4", // depth: 3
-										Followers: []model.Follower{
-											{
-												Login:     "testuser3", // depth: 4
-												Followers: []model.Follower(nil),
-											},
-										},
-									},
-									{
-										Login: "testuser1",
-										Followers: []model.Follower{
-											{
-												Login: "testuserempty1",
-											},
-											{
-												Login: "testuserempty2",
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-					{
-						Login: "testuser1",
-						Followers: []model.Follower{
-							{
-								Login: "testuserempty1", // depth: 1
-							},
-							{
-								Login: "testuserempty2",
-							},
-						},
-					},
-				},
-			},
-		},
+		expectedHTTPCalls: 7,
+		expectedData:      createFakeGetFollowersData2(),
+		expectedErr:       nil,
 	},
 	{
 		username:          "",
@@ -178,6 +159,7 @@ func TestGetFollowers(t *testing.T) {
 
 			// Create a local HTTP server.
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Increment http calls for test assertion.
 				httpCalls++
 
 				// Retrieve the parameter.
@@ -194,7 +176,7 @@ func TestGetFollowers(t *testing.T) {
 			}
 
 			// Call the function under test.
-			followers, err := handler.GetFollowers(tt.username)
+			followers, err := handler.GetFollowers(tt.username, 100, 4)
 
 			// Check if the expected amount of HTTP calls were made.
 			assert.Equal(t, tt.expectedHTTPCalls, httpCalls)

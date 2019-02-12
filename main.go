@@ -25,5 +25,6 @@ func main() {
 	api.Get("/followers/{username}", api.GetFollowers)
 
 	// Listen for connections.
+	log.Println("Listening on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", api.Router))
 }
