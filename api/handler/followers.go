@@ -48,7 +48,7 @@ func (f *FollowersHandler) getFollowersImpl(username string, maxFollowerCount in
 	// Iterate over queue and fetch followers.
 	for len(queue[:]) > 0 {
 		// If depth is max or follower max is reached, clear the queue.
-		if depth > maxDepth || len(followerMap) > maxFollowerCount {
+		if depth > maxDepth+1 || len(followerMap) >= maxFollowerCount {
 			queue = nil
 			break
 		}
@@ -77,10 +77,10 @@ func (f *FollowersHandler) getFollowersImpl(username string, maxFollowerCount in
 				followerMap[follower.Login] = &model.FollowerNode{
 					Depth: depth,
 				}
-			}
 
-			// Queue up the followers to be queried.
-			queue = append(queue, follower.Login)
+				// Queue up the followers to be queried.
+				queue = append(queue, follower.Login)
+			}
 		}
 
 		// Since we're using a queue, once the depth length hits 0, we're onto the next depth of followers.

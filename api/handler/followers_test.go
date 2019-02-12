@@ -160,7 +160,7 @@ var testGetFollowersCases = []struct {
 	{
 		username:          "testuser2",
 		maxDepth:          3,
-		maxFollowers:      7,
+		maxFollowers:      8,
 		expectedHTTPCalls: 8,
 		expectedData:      createFakeGetFollowersData2(),
 		expectedErr:       nil,
