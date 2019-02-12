@@ -61,16 +61,18 @@ func (a *API) GetFollowers(w http.ResponseWriter, r *http.Request) {
 	// Call the wrapped method.
 	followers, err := a.FollowersHandler.GetFollowers(username, config.MaxFollowerCount, config.MaxFollowerDepth)
 
-	// Marshal the followers array for response format.
-	var resp []byte
-	resp, err = json.Marshal(followers)
-
 	// Write the error if there was one.
 	if err != nil {
+		errStr := err.Error()
+
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(resp)
+		w.Write([]byte(errStr))
 		return
 	}
+
+	// Marshal the followers array for response format.
+	var resp []byte
+	resp, _ = json.Marshal(followers)
 
 	// Write the body.
 	w.Write(resp)

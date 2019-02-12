@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/TGibsonn/github-follower-api/api/model"
@@ -26,13 +25,13 @@ func (f *FollowersHandler) GetFollowers(username string, maxFollowerCount int, m
 	}
 
 	// Create map for return.
-	followerMap := f.getFollowersImpl(username, maxFollowerCount, maxDepth)
+	followerMap, err := f.getFollowersImpl(username, maxFollowerCount, maxDepth)
 
-	return followerMap, nil
+	return followerMap, err
 }
 
 // getFollowersImpl is the algorithm implementation for manipulating the followers map.
-func (f *FollowersHandler) getFollowersImpl(username string, maxFollowerCount int, maxDepth int) model.FollowerMap {
+func (f *FollowersHandler) getFollowersImpl(username string, maxFollowerCount int, maxDepth int) (model.FollowerMap, error) {
 	// Start depth off at 0.
 	depth := 0
 
@@ -58,15 +57,10 @@ func (f *FollowersHandler) getFollowersImpl(username string, maxFollowerCount in
 		username := queue[0]
 
 		// Retrieve followers for first queue element.
-		body, statuscode, err := f.httpGetFollowers(username)
+		body, err := f.httpGetFollowers(username)
 		if err != nil {
-			log.Printf("[GetFollowers] Error: %+v", err)
-		}
-
-		// Rate-limited.
-		if statuscode == 403 {
 			queue = nil
-			break
+			return nil, err
 		}
 
 		// Parse the response body into a list of followers.
@@ -107,15 +101,19 @@ func (f *FollowersHandler) getFollowersImpl(username string, maxFollowerCount in
 		currDepthSize--
 	}
 
-	return followerMap
+	return followerMap, nil
 }
 
 // httpGetFollowers performs an HTTP GET on GitHub's API /users/{username}/followers
-func (f *FollowersHandler) httpGetFollowers(username string) ([]byte, int, error) {
+func (f *FollowersHandler) httpGetFollowers(username string) ([]byte, error) {
 	// Call GitHub's API using the HTTPClient.
 	resp, err := f.HTTPClient.Get(f.BaseURL + "/users/" + username + "/followers?username=" + username)
 	if err != nil {
-		return nil, resp.StatusCode, err
+		return nil, err
+	}
+
+	if resp.StatusCode == 403 {
+		return nil, errors.New("rate limit exceeded")
 	}
 
 	// Body is an io.Reader, so we need to close it after this is executed.
@@ -124,8 +122,8 @@ func (f *FollowersHandler) httpGetFollowers(username string) ([]byte, int, error
 	// Read response body until EOF or an error occurs.
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, resp.StatusCode, err
+		return nil, err
 	}
 
-	return body, resp.StatusCode, err
+	return body, err
 }
