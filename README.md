@@ -22,6 +22,8 @@ Read more about the `follower` endpoint of the Github v3 REST API here: <https:/
   - [Structure](#structure)
 - [Constraints](#constraints)
   - [Rate Limits](#rate-limits)
+- [Endpoints](#endpoints)
+  - [Followers](#followers)
 
 ## Setup
 
@@ -95,3 +97,11 @@ All unit tests are located next to their respective production code. I.e., `api_
 Due to [rate limit constraints](https://developer.github.com/v3/#rate-limiting) I recommend lowering the max follower count.
 
 Authentication is not currently supported.
+
+## Endpoints
+
+### Followers
+
+`GET` `/followers/{username}`
+
+Returns a map of followers for a given user to the configured follower max count and max depth.
