@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/TGibsonn/github-follower-api/api/model"
+	"github.com/TGibsonn/github-follower-api/config"
 	"github.com/gorilla/mux"
 )
 
@@ -58,7 +59,7 @@ func (a *API) GetFollowers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call the wrapped method.
-	followers, err := a.FollowersHandler.GetFollowers(username, 100, 4)
+	followers, err := a.FollowersHandler.GetFollowers(username, config.MaxFollowerCount, config.MaxFollowerDepth)
 
 	// Marshal the followers array for response format.
 	var resp []byte

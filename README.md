@@ -30,7 +30,15 @@ go get -d -t ./...
 
 ### Configuration
 
-TODO.
+See the `/config/config.go` constants.
+
+There you can configure:
+
+```bash
+DefaultPort
+MaxFollowerCount
+MaxFollowerDepth
+```
 
 ### Building & Running
 
@@ -38,6 +46,16 @@ TODO.
 go build
 ./github-follower-api
 ```
+
+or
+
+```bash
+./github-follower-api 3000
+```
+
+to run on a different port.
+
+The `DefaultPort` is 8080.
 
 ## Tests
 

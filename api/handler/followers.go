@@ -3,8 +3,8 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/TGibsonn/github-follower-api/api/model"
@@ -28,8 +28,6 @@ func (f *FollowersHandler) GetFollowers(username string, maxFollowerCount int, m
 	// Create map for return.
 	followerMap := f.getFollowersImpl(username, maxFollowerCount, maxDepth)
 
-	fmt.Printf("%+v", followerMap)
-
 	return followerMap, nil
 }
 
@@ -51,18 +49,25 @@ func (f *FollowersHandler) getFollowersImpl(username string, maxFollowerCount in
 	// Iterate over queue and fetch followers.
 	for len(queue[:]) > 0 {
 		// If depth is max or follower max is reached, clear the queue.
-		if depth > maxDepth || len(followerMap) >= maxFollowerCount {
+		if depth > maxDepth || len(followerMap) > maxFollowerCount {
 			queue = nil
+			break
 		}
 
 		// Retrieve username.
 		username := queue[0]
 
-		// Pop top of queue.
-		queue = queue[1:]
-
 		// Retrieve followers for first queue element.
-		body, _ := f.httpGetFollowers(username)
+		body, statuscode, err := f.httpGetFollowers(username)
+		if err != nil {
+			log.Printf("[GetFollowers] Error: %+v", err)
+		}
+
+		// Rate-limited.
+		if statuscode == 403 {
+			queue = nil
+			break
+		}
 
 		// Parse the response body into a list of followers.
 		var followers []model.Follower
@@ -73,23 +78,32 @@ func (f *FollowersHandler) getFollowersImpl(username string, maxFollowerCount in
 		for _, follower := range followers {
 			followerList = append(followerList, follower.Login)
 
-			followerMap[follower.Login] = &model.FollowerNode{
-				Depth: depth,
+			// Don't add any more entries if we exceed the limit here.
+			if len(followerMap) < maxFollowerCount {
+				followerMap[follower.Login] = &model.FollowerNode{
+					Depth: depth,
+				}
 			}
 
 			// Queue up the followers to be queried.
 			queue = append(queue, follower.Login)
 		}
 
+		// Since we're using a queue, once the depth length hits 0, we're onto the next depth of followers.
 		if currDepthSize <= 0 {
-			currDepthSize = len(followerList)
+			currDepthSize = len(queue)
 			depth++
 		}
 
+		// Prevents followers from being added for the root username and possible null memory exceptions.
 		if followerMap[username] != nil {
 			followerMap[username].Followers = followerList
 		}
 
+		// Pop top of queue.
+		queue = queue[1:]
+
+		// Depth size lowers after each iteration since we remove the first queue element.
 		currDepthSize--
 	}
 
@@ -97,11 +111,11 @@ func (f *FollowersHandler) getFollowersImpl(username string, maxFollowerCount in
 }
 
 // httpGetFollowers performs an HTTP GET on GitHub's API /users/{username}/followers
-func (f *FollowersHandler) httpGetFollowers(username string) ([]byte, error) {
+func (f *FollowersHandler) httpGetFollowers(username string) ([]byte, int, error) {
 	// Call GitHub's API using the HTTPClient.
 	resp, err := f.HTTPClient.Get(f.BaseURL + "/users/" + username + "/followers?username=" + username)
 	if err != nil {
-		return nil, err
+		return nil, resp.StatusCode, err
 	}
 
 	// Body is an io.Reader, so we need to close it after this is executed.
@@ -110,8 +124,8 @@ func (f *FollowersHandler) httpGetFollowers(username string) ([]byte, error) {
 	// Read response body until EOF or an error occurs.
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, resp.StatusCode, err
 	}
 
-	return body, err
+	return body, resp.StatusCode, err
 }

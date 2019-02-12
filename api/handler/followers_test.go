@@ -22,8 +22,12 @@ func setupGetFollowersFakes() {
 
 	// Test User 3
 	fakeFollowerJSONMap["testuser3"] = testUser3JSON
+
+	// Test User 4
+	fakeFollowerJSONMap["testuser4"] = testUser4JSON
 }
 
+// Produces depth 0 and 3 HTTP calls.
 func createFakeGetFollowersData1() model.FollowerMap {
 	followerMap := make(model.FollowerMap)
 
@@ -40,6 +44,7 @@ func createFakeGetFollowersData1() model.FollowerMap {
 	return followerMap
 }
 
+// Produces depth 2 and 8 HTTP calls.
 func createFakeGetFollowersData2() model.FollowerMap {
 	followerMap := make(model.FollowerMap)
 
@@ -50,7 +55,7 @@ func createFakeGetFollowersData2() model.FollowerMap {
 
 	followerMap["testuser3"] = &model.FollowerNode{
 		Depth:     0,
-		Followers: []string{"testuserempty4"},
+		Followers: []string{"testuser4"},
 	}
 
 	followerMap["testuserempty3"] = &model.FollowerNode{
@@ -68,8 +73,13 @@ func createFakeGetFollowersData2() model.FollowerMap {
 		Followers: make([]string, 0),
 	}
 
-	followerMap["testuserempty4"] = &model.FollowerNode{
+	followerMap["testuser4"] = &model.FollowerNode{
 		Depth:     1,
+		Followers: []string{"testuserempty4"},
+	}
+
+	followerMap["testuserempty4"] = &model.FollowerNode{
+		Depth:     2,
 		Followers: make([]string, 0),
 	}
 
@@ -110,7 +120,17 @@ var testUser2JSON = []byte(`
 ]
 `)
 
+// 1 follower.
 var testUser3JSON = []byte(`
+[
+	{
+		"login": "testuser4"
+	}	
+]
+`)
+
+// 1 follower.
+var testUser4JSON = []byte(`
 [
 	{
 		"login": "testuserempty4"
@@ -123,19 +143,25 @@ var testUser3JSON = []byte(`
 // TestGetFollowers test table.
 var testGetFollowersCases = []struct {
 	username          string
+	maxDepth          int
+	maxFollowers      int
 	expectedHTTPCalls int
 	expectedData      model.FollowerMap
 	expectedErr       error
 }{
 	{
 		username:          "testuser1",
+		maxDepth:          1,
+		maxFollowers:      3,
 		expectedHTTPCalls: 3,
 		expectedData:      createFakeGetFollowersData1(),
 		expectedErr:       nil,
 	},
 	{
 		username:          "testuser2",
-		expectedHTTPCalls: 7,
+		maxDepth:          3,
+		maxFollowers:      7,
+		expectedHTTPCalls: 8,
 		expectedData:      createFakeGetFollowersData2(),
 		expectedErr:       nil,
 	},
@@ -176,7 +202,7 @@ func TestGetFollowers(t *testing.T) {
 			}
 
 			// Call the function under test.
-			followers, err := handler.GetFollowers(tt.username, 100, 4)
+			followers, err := handler.GetFollowers(tt.username, tt.maxFollowers, tt.maxDepth)
 
 			// Check if the expected amount of HTTP calls were made.
 			assert.Equal(t, tt.expectedHTTPCalls, httpCalls)

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/TGibsonn/github-follower-api/api/model"
+	"github.com/TGibsonn/github-follower-api/config"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -118,7 +119,7 @@ func TestGetFollowers(t *testing.T) {
 			testFollowersHandler := new(MockFollowersHandler)
 
 			// Expectation: GetFollowers is called with the correct parameters
-			testFollowersHandler.On("GetFollowers", "testuser", 100, 4).Return(model.FollowerMap{}, nil)
+			testFollowersHandler.On("GetFollowers", "testuser", config.MaxFollowerCount, config.MaxFollowerDepth).Return(model.FollowerMap{}, nil)
 
 			// Create instance of the API.
 			api := API{
@@ -133,7 +134,7 @@ func TestGetFollowers(t *testing.T) {
 
 			// If we expected an error, ensure GetFollowers wrapped method wasn't actually called.
 			if recorder.Code != http.StatusOK {
-				testFollowersHandler.AssertNotCalled(t, "GetFollowers", "testuser", 100, 4)
+				testFollowersHandler.AssertNotCalled(t, "GetFollowers", "testuser", config.MaxFollowerCount, config.MaxFollowerDepth)
 				return
 			}
 
